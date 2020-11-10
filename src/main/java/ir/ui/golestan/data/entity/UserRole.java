@@ -1,5 +1,6 @@
 package ir.ui.golestan.data.entity;
 
+import ir.ui.golestan.authorization.Role;
 import lombok.Data;
 
 import javax.persistence.Entity;
@@ -14,10 +15,4 @@ public class UserRole {
 
     private Role role;
 
-
-    public enum Role {
-        ADMIN,
-        PROFESSOR,
-        STUDENT,
-    }
 }
