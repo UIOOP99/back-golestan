@@ -22,12 +22,14 @@ public class CourseController extends BaseController {
         this.repository = repository;
     }
 
+    //add new course
     @PostMapping("/courses")
     Course newCourse (RequestEntity<?> requestEntity, @RequestBody Course newCourse) {
         AuthenticatedUser user = getAuthenticatedUser(requestEntity, Role.ADMIN);
         return repository.save(newCourse);
     }
 
+    //edit a course specifications
     @PutMapping("/courses/{id}")
     Course replaceCourse (RequestEntity<?> requestEntity, @RequestBody Course newCourse, @PathVariable int id) {
         AuthenticatedUser user = getAuthenticatedUser(requestEntity, Role.ADMIN);
@@ -45,17 +47,20 @@ public class CourseController extends BaseController {
                 });
     }
 
+    //get a course by id
     @GetMapping("/courses/{id}")
     Course one(@PathVariable int id) {
         return repository.findById(id)
                 .orElseThrow(() -> new CourseNotFoundException(id));
     }
 
+    //get a list of all courses
     @GetMapping("/courses")
     List<Course> all() {
         return repository.findAll();
     }
 
+    //delete a course by id
     @DeleteMapping("/courses/{id}")
     void deleteCourse (RequestEntity<?> requestEntity, @RequestBody Course delCourse) {
         AuthenticatedUser user = getAuthenticatedUser(requestEntity, Role.ADMIN);
