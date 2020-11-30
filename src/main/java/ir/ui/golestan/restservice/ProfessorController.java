@@ -16,10 +16,10 @@ public class ProfessorController {
 
 	@GetMapping("/professor")
     public void setStudentScore(RequestEntity<?> request, int studentId, int courseId, 
-                                int scoreId, double score, ScoreRepository repository) {// Repository???
+                                double score, ScoreRepository repository) {// Repository???
         
         AuthenticatedUser user = getAuthenticatedUser(request, Role.PROFESSOR);
-        repository.save(new Score(studentId, courseId, score), scoreId); // @AllArgsConstructor?
+        repository.save(new Score(studentId, courseId, score)); // @AllArgsConstructor?
         
 	}
 }
