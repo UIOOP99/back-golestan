@@ -13,6 +13,5 @@ import org.springframework.stereotype.Repository;
 public interface ScoreRepository extends JpaRepository<Score, Score.ScoreId> {
     @Query("SELECT s FROM Score s WHERE s.id = :id")
     Collection<Score> findScoresById(@Param("id") int id);
-
 }
 
