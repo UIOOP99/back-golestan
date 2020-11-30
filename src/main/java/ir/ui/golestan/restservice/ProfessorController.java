@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import ir.ui.golestan.data.entity.Score;
 import ir.ui.golestan.data.repository.ScoreRepository;
 import ir.ui.golestan.authorization.AuthenticatedUser;
-import ir.ui.golestan.authorization.BaseController;
+import ir.ui.golestan.authorization.Role;
 
 @RestController
 public class ProfessorController {
@@ -18,7 +18,7 @@ public class ProfessorController {
     public void setStudentScore(RequestEntity<?> request, int studentId, int courseId, 
                                 int scoreId, double score, ScoreRepository repository) {// Repository???
         
-        AuthenticatedUser user = getAuthenticatedUser(request, PROFESSOR);
+        AuthenticatedUser user = getAuthenticatedUser(request, Role.PROFESSOR);
         repository.save(new Score(studentId, courseId, score), scoreId); // @AllArgsConstructor?
         
 	}
