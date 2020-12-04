@@ -1,10 +1,11 @@
-package ir.ui.golestan.mamadreza;
+package ir.ui.golestan.controller;
 
 import ir.ui.golestan.GolestanConfiguration;
 import ir.ui.golestan.authorization.AuthenticatedUser;
 import ir.ui.golestan.authorization.AuthorizationService;
 import ir.ui.golestan.authorization.BaseController;
 import ir.ui.golestan.authorization.Role;
+import ir.ui.golestan.exception.CourseNotFoundException;
 import ir.ui.golestan.data.entity.Course;
 import ir.ui.golestan.data.repository.CourseRepository;
 import org.springframework.http.RequestEntity;
