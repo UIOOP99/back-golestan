@@ -18,6 +18,7 @@ import java.io.Serializable;
 @IdClass(Score.ScoreId.class)
 public class Score {
 
+
 	@Id
     int studentId;
 
