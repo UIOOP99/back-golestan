@@ -27,10 +27,8 @@ public class AdminController extends BaseController {
     }
     
     @GetMapping("/admin/get_role")
-    public UserRole getRole(RequestEntity<?> request, int userId) {
-        
-        AuthenticatedUser user = getAuthenticatedUser(request, Role.ADMIN);
-        return userRole.findRole(int userId);
-        
+    public UserRole getRole(int userId) {
+
+        return userRole.findRole(int userId);        
 	}
 }
