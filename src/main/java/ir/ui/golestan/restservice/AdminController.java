@@ -21,14 +21,13 @@ public class AdminController extends BaseController {
     private final UserRoleRepository userRole;
 
     public AdminController(GolestanConfiguration configuration, AuthorizationService authorizationService,
-                            UserRoleRepository userRole) {
+                           UserRoleRepository userRole) {
         super(configuration, authorizationService);
         this.userRole = userRole;
     }
-    
+
     @GetMapping("/admin/get_role")
     public UserRole getRole(int userId) {
-
-        return userRole.findRole(int userId);        
-	}
+        return userRole.findByUserId(userId);
+    }
 }
