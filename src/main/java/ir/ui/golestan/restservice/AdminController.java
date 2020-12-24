@@ -2,10 +2,11 @@ package ir.ui.golestan.restservice;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import lombok.Builder;
+import lombok.Value;
 import org.springframework.http.RequestEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import ir.ui.golestan.GolestanConfiguration;
 import ir.ui.golestan.authorization.AuthenticatedUser;
@@ -30,4 +31,30 @@ public class AdminController extends BaseController {
     public UserRole getRole(int userId) {
         return userRole.findByUserId(userId);
     }
+
+
+    @PostMapping("/admin/add_user")
+    public int createUser(RequestEntity<?> requestEntity, @RequestBody InputUser newUser) {
+        AuthenticatedUser user = getAuthenticatedUser(requestEntity, Role.ADMIN);
+
+        int userId = 0; // TODO Send newUser to auth with grpc and get user
+        userRole.save(UserRole.builder().userId(userId).role(Role.valueOf(newUser.role)).build());
+        return userId;
+    }
+
+    @Value
+    @Builder
+    @JsonDeserialize
+    public static class InputUser {
+        String firstname;
+
+        String lastname;
+
+        String email;
+
+        String password;
+
+        String role;
+    }
+
 }
