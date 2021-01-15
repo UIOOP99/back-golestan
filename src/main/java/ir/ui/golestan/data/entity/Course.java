@@ -22,6 +22,8 @@ public class Course {
     @Id
     private int id;
 
+    private int semesterId;
+
     private int professorId;
 
     @OrderColumn
