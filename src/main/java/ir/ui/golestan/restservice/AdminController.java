@@ -1,5 +1,6 @@
 package ir.ui.golestan.restservice;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.springframework.http.RequestEntity;
@@ -13,22 +14,38 @@ import ir.ui.golestan.authorization.AuthorizationService;
 import ir.ui.golestan.authorization.BaseController;
 import ir.ui.golestan.authorization.Role;
 import ir.ui.golestan.data.entity.UserRole;
+import ir.ui.golestan.data.repository.CourseRepository;
 import ir.ui.golestan.data.repository.UserRoleRepository;
 
 @RestController
 public class AdminController extends BaseController {
-
+    
     private final UserRoleRepository userRole;
 
     public AdminController(GolestanConfiguration configuration, AuthorizationService authorizationService,
                             UserRoleRepository userRole) {
         super(configuration, authorizationService);
         this.userRole = userRole;
+        
     }
     
     @GetMapping("/admin/get_role")
     public UserRole getRole(int userId) {
 
         return userRole.findRole(int userId);        
-	}
+    }
+    
+    @GetMapping("/admin/get_allProfessors")
+    public List<Integer> findAllProfessorIdsList() {
+
+        return userRole.findAllProfessorsList();        
+    }
+
+    @GetMapping("/admin/get_allStudents")
+    public List<Integer> findAllStudentIdsList() {
+
+        return userRole.findAllStudentsList();       
+    }
+
+
 }
