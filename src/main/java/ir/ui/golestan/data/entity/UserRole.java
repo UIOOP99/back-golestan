@@ -14,7 +14,7 @@ import javax.persistence.Id;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserRole {
+public final class UserRole {
 
     @Id
     private int userId;

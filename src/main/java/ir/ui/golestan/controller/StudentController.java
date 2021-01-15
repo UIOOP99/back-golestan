@@ -1,4 +1,4 @@
-package ir.ui.golestan.restservice;
+package ir.ui.golestan.controller;
 
 import ir.ui.golestan.data.entity.Score;
 import org.springframework.http.RequestEntity;

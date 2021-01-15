@@ -13,7 +13,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @IdClass(Score.ScoreId.class)
-public class Score {
+public final class Score {
 
 
 	@Id
