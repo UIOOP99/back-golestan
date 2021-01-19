@@ -1,9 +1,6 @@
 package ir.ui.golestan.data.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -16,7 +13,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @IdClass(Score.ScoreId.class)
-public class Score {
+public final class Score {
 
 
 	@Id
@@ -27,6 +24,8 @@ public class Score {
 
     double score;
 
+    @EqualsAndHashCode
+    @NoArgsConstructor
     @AllArgsConstructor(staticName = "of")
     public static class ScoreId implements Serializable {
 

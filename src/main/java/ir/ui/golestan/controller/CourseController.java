@@ -68,5 +68,4 @@ public class CourseController extends BaseController {
         repository.delete(delCourse);
     }
 
-
 }
