@@ -1,4 +1,4 @@
-package ir.ui.golestan.jrpc;
+package ir.ui.golestan.grpc;
 
 public interface GrpcInterface {
     
