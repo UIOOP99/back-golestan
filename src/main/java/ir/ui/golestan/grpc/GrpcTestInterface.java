@@ -1,4 +1,4 @@
-package ir.ui.golestan.jrpc;
+package ir.ui.golestan.grpc;
 
 import org.springframework.stereotype.Component;
 
