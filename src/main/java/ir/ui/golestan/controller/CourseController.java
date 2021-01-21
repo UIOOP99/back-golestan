@@ -55,6 +55,13 @@ public class CourseController extends BaseController {
                 .orElseThrow(() -> new CourseNotFoundException(id));
     }
 
+    //get a course by id
+    @GetMapping("/courses/{id}/conf")
+    List<Course> conf(@PathVariable int id) {
+        return repository.findById(id).
+                .orElseThrow(() -> new CourseNotFoundException(id));
+    }
+
     //get a list of all courses
     @GetMapping("/courses")
     List<Course> all() {
