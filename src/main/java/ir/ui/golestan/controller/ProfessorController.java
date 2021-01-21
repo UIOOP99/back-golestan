@@ -1,10 +1,14 @@
 package ir.ui.golestan.controller;
 
+import java.util.List;
+
 import org.springframework.http.RequestEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import ir.ui.golestan.data.entity.Score;
+import ir.ui.golestan.data.entity.Course;
+import ir.ui.golestan.data.repository.CourseRepository;
 import ir.ui.golestan.data.repository.ScoreRepository;
 import ir.ui.golestan.GolestanConfiguration;
 import ir.ui.golestan.authorization.AuthenticatedUser;
@@ -16,11 +20,13 @@ import ir.ui.golestan.authorization.Role;
 public class ProfessorController extends BaseController {
 
     private final ScoreRepository scoreRepository;
+    private final CourseRepository courseRepository;
 
     public ProfessorController(GolestanConfiguration configuration, AuthorizationService authorizationService,
-            ScoreRepository scoreRepository) {
+            ScoreRepository scoreRepository, CourseRepository courseRepository) {
         super(configuration, authorizationService);
         this.scoreRepository = scoreRepository;
+        this.courseRepository = courseRepository;
     }
 
     @GetMapping("/professor/set_score")
@@ -29,6 +35,15 @@ public class ProfessorController extends BaseController {
         
         AuthenticatedUser user = getAuthenticatedUser(request, Role.PROFESSOR);
         scoreRepository.save(Score.builder().studentId(studentId).courseId(courseId).score(score).build());
+        
+    }
+    
+    @GetMapping("/professor/get_courses")
+    public List<Course> getAllCourses(RequestEntity<?> request) {
+        
+        AuthenticatedUser user = getAuthenticatedUser(request, Role.PROFESSOR);
+        return courseRepository.findAllByProfessorId(user.getUserId());
+        
         
 	}
 }
