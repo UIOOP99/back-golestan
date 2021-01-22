@@ -1,0 +1,46 @@
+syntax = "proto3";
+option java_multiple_files = true;
+package ir.ui.golestan.grpc;
+
+message CourseResponse {
+  int32 id = 1;
+  int32 semesterId = 2;
+  int32 professorId = 3;
+
+}
+
+message CoursesResponse{
+  repeated CourseResponse courses = 1;
+}
+
+
+message UserIdRequest{
+  int32 userId = 1;
+}
+
+message RoleResponse{
+  int32 userId = 1;
+  string role = 2;
+}
+
+message CourseIdRequest{
+  int32 courseId = 1;
+}
+
+message Empty {
+
+}
+
+message TermIdRequest{
+  int32 courseId = 1;
+  int32 termId = 2;
+}
+
+
+service GrpcService{
+  rpc getAllCourses(Empty) returns (CoursesResponse);
+  rpc getPersonCourses(UserIdRequest) returns (CoursesResponse);
+  rpc getPersonCoursesByTerm(TermIdRequest) returns (CoursesResponse);
+  rpc getUserRole(UserIdRequest) returns (RoleResponse);
+  rpc getCoursesOfStudentOfCourseId(CourseIdRequest) returns (CoursesResponse);
+}

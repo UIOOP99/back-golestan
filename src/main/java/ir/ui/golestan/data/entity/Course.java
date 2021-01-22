@@ -25,13 +25,15 @@ public final class Course {
 
     private String name;
 
+    private int units;
+
     private int semesterId;
+
+    @OneToMany
+    private List<CourseDate> dates;
 
     private int professorId;
 
-    private int courseUnits;
-
-    @Id
     @OrderColumn
     private int[] studentsIds;
 
