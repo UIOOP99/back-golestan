@@ -5,12 +5,14 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Setter;
 import lombok.Value;
 
-@Value
+@Data
 @Builder(toBuilder = true)
 @JsonDeserialize
 public class AuthenticatedUser {
+
 
     int userId;
 

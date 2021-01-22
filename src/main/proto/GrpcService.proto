@@ -9,6 +9,11 @@ message CourseResponse {
 
 }
 
+message CoursesResponse{
+  repeated CourseResponse courses = 1;
+}
+
+
 message UserIdRequest{
   int32 userId = 1;
 }
@@ -18,13 +23,23 @@ message RoleResponse{
   string role = 2;
 }
 
+message CourseIdRequest{
+  int32 courseId = 1;
+}
+
 message Empty {
 
 }
 
+message TermIdRequest{
+  int32 termId = 1;
+}
+
 
 service GrpcService{
-    rpc getCourses(Empty) returns (CourseResponse);
-
-    rpc getRole(UserIdRequest) returns (RoleResponse);
+    rpc getAllCourses(Empty) returns (CoursesResponse);
+    rpc getPersonCourses(UserIdRequest) returns (CoursesResponse);
+    rpc getPersonCoursesByTerm(TermIdRequest) returns (CoursesResponse);
+    rpc getUserRole(UserIdRequest) returns (RoleResponse);
+    rpc getCoursesOfStudentOfCourseId(CourseIdRequest) returns (CoursesResponse);
 }
