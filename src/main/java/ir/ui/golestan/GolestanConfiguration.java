@@ -14,4 +14,8 @@ public class GolestanConfiguration {
     private String privateKey;
 
     private String authHeader;
+
+    private String authServerName;
+
+    private int authServerPort;
 }

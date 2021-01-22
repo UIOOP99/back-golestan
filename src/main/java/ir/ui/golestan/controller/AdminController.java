@@ -95,6 +95,8 @@ public class AdminController extends BaseController {
 
         String lastname;
 
+        String username;
+
         String email;
 
         String password;

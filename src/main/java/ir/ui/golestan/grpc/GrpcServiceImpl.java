@@ -1,27 +1,27 @@
 package ir.ui.golestan.grpc;
 
 import io.grpc.stub.StreamObserver;
+import ir.ui.golestan.authorization.Role;
 import ir.ui.golestan.data.entity.Course;
 import ir.ui.golestan.data.entity.UserRole;
 import ir.ui.golestan.data.repository.CourseRepository;
 import ir.ui.golestan.data.repository.ScoreRepository;
-import ir.ui.golestan.data.repository.UserRepository;
 import ir.ui.golestan.data.repository.UserRoleRepository;
 import net.devh.boot.grpc.server.service.GrpcService;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @GrpcService
-public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase{
+public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
 
     private final UserRoleRepository userRoleRepository;
-    private final UserRepository userRepository;
     private final CourseRepository courseRepository;
     private final ScoreRepository scoreRepository;
 
-    public GrpcServiceImpl(UserRoleRepository userRoleRepository, UserRepository userRepository, CourseRepository courseRepository, ScoreRepository scoreRepository) {
+    public GrpcServiceImpl(UserRoleRepository userRoleRepository, CourseRepository courseRepository, ScoreRepository scoreRepository) {
         this.userRoleRepository = userRoleRepository;
-        this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.scoreRepository = scoreRepository;
     }
@@ -38,7 +38,11 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase{
     public void getPersonCourses(UserIdRequest request, StreamObserver<CoursesResponse> responseObserver) {
         Integer userId = request.getUserId();
 
-        List<Course> courses = null; //TODO fetch accordingly based on the userId
+        List<Course> courses = userRoleRepository.getOne(userId).getRole() == Role.PROFESSOR ?
+                courseRepository.findAllByProfessorId(userId) :
+                courseRepository.findAll().stream()
+                        .filter(c -> Arrays.stream(c.getStudentsIds()).anyMatch(id -> id == userId))
+                        .collect(Collectors.toList());
 
         responseObserver.onNext(coursesToCoursesResponse(courses));
         responseObserver.onCompleted();
@@ -46,9 +50,14 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase{
 
     @Override
     public void getPersonCoursesByTerm(TermIdRequest request, StreamObserver<CoursesResponse> responseObserver) {
+        Integer userId = request.getCourseId();
         Integer termId = request.getTermId();
 
-        List<Course> courses = null; //TODO fetch accordingly based on the termId
+        List<Course> courses = userRoleRepository.getOne(userId).getRole() == Role.PROFESSOR ?
+                courseRepository.findAllByProfessorIdAndSemesterId(userId, termId) :
+                courseRepository.findAllBySemesterId(termId).stream()
+                        .filter(c -> Arrays.stream(c.getStudentsIds()).anyMatch(id -> id == userId))
+                        .collect(Collectors.toList());
 
         responseObserver.onNext(coursesToCoursesResponse(courses));
         responseObserver.onCompleted();
@@ -58,7 +67,11 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase{
     public void getCoursesOfStudentOfCourseId(CourseIdRequest request, StreamObserver<CoursesResponse> responseObserver) {
         Integer courseId = request.getCourseId();
 
-        List<Course> courses = null; //TODO fetch accordingly based on the courseId
+        List<Course> all = courseRepository.findAll();
+        List<Course> courses = Arrays.stream(courseRepository.getOne(courseId).getStudentsIds())
+                .mapToObj(studentId -> all.stream().filter(c -> Arrays.stream(c.getStudentsIds()).anyMatch(id -> studentId == id)))
+                .flatMap(courseStream -> courseStream)
+                .collect(Collectors.toList());
 
         responseObserver.onNext(coursesToCoursesResponse(courses));
         responseObserver.onCompleted();
@@ -66,26 +79,23 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase{
 
     @Override
     public void getUserRole(UserIdRequest request, StreamObserver<RoleResponse> responseObserver) {
-        UserRole role = userRoleRepository.findByUserId(request.getUserId());
+        UserRole role = userRoleRepository.getOne(request.getUserId());
         RoleResponse roleResponse = roleToRoleResponse(role);
 
         responseObserver.onNext(roleResponse);
         responseObserver.onCompleted();
     }
 
-    private CoursesResponse coursesToCoursesResponse(List<Course> courses)
-    {
+    private CoursesResponse coursesToCoursesResponse(List<Course> courses) {
         CoursesResponse.Builder coursesbuilder = CoursesResponse.newBuilder();
         int i = 0;
-        for(Course course : courses)
-        {
+        for (Course course : courses) {
             coursesbuilder.setCourses(i++, courseToCourseResponse(course));
         }
         return coursesbuilder.build();
     }
 
-    private CourseResponse courseToCourseResponse(Course course)
-    {
+    private CourseResponse courseToCourseResponse(Course course) {
         return CourseResponse.newBuilder()
                 .setId(course.getId())
                 .setSemesterId(course.getSemesterId())
@@ -93,8 +103,7 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase{
                 .build();
     }
 
-    private RoleResponse roleToRoleResponse(UserRole role)
-    {
+    private RoleResponse roleToRoleResponse(UserRole role) {
         return RoleResponse.newBuilder()
                 .setUserId(role.getUserId())
                 .setRole(role.getRole().toString())

@@ -2,29 +2,32 @@ package ir.ui.golestan.grpc;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import ir.ui.golestan.GolestanConfiguration;
 import ir.ui.golestan.authorization.AuthenticatedUser;
+import ir.ui.golestan.controller.AdminController;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AuthGrpcCleintService {
+@RequiredArgsConstructor
+public class AuthGrpcClientService {
 
-    public AuthenticatedUser signup(AuthenticatedUser user, String password)
-    {
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("address", 0)//TODO put right values
-        .usePlaintext()
+    private final GolestanConfiguration configuration;
+
+    public int signup(AdminController.InputUser user) {
+        ManagedChannel channel = ManagedChannelBuilder.forAddress(configuration.getAuthServerName(), configuration.getAuthServerPort())
+                .usePlaintext()
                 .build();
 
         AuthGoGrpcServiceGrpc.AuthGoGrpcServiceBlockingStub stub = AuthGoGrpcServiceGrpc.newBlockingStub(channel);
-        ir.ui.golestan.grpc.User signedUpUser = stub.signup(authenticatedUserToUser(user, password));
+        ir.ui.golestan.grpc.User signedUpUser = stub.signup(inputUserToUser(user));
         channel.shutdown();
 
-        user.setUserId((int)signedUpUser.getID());
-        return user;
+        return (int) signedUpUser.getID();
     }
 
-    public AuthPairToken login(String username, String password)
-    {
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("address", 0)//TODO put right values
+    public AuthPairToken login(String username, String password) {
+        ManagedChannel channel = ManagedChannelBuilder.forAddress(configuration.getAuthServerName(), configuration.getAuthServerPort())
                 .usePlaintext()
                 .build();
 
@@ -39,9 +42,8 @@ public class AuthGrpcCleintService {
         return authPairToken;
     }
 
-    public String refreshAccessToken(String token)
-    {
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("address", 0)//TODO put right values
+    public String refreshAccessToken(String token) {
+        ManagedChannel channel = ManagedChannelBuilder.forAddress(configuration.getAuthServerName(), configuration.getAuthServerPort())
                 .usePlaintext()
                 .build();
 
@@ -53,17 +55,16 @@ public class AuthGrpcCleintService {
     }
 
 
-    private ir.ui.golestan.grpc.User authenticatedUserToUser(AuthenticatedUser authenticatedUser,  String password)
-    {
+    private ir.ui.golestan.grpc.User inputUserToUser(AdminController.InputUser inputUser) {
         return ir.ui.golestan.grpc.User.newBuilder()
-                .setEmail(authenticatedUser.getEmail())
-                .setFirstName(authenticatedUser.getFirstName())
-                .setLastName(authenticatedUser.getLastName())
-                .setUsername(authenticatedUser.getUsername())
+                .setEmail(inputUser.getEmail())
+                .setFirstName(inputUser.getFirstname())
+                .setLastName(inputUser.getLastname())
+                .setUsername(inputUser.getUsername())
 //                .setRoleId() //TODO it needs roleId, idk what is roleId
-                .setPassword(password)
+                .setPassword(inputUser.getPassword())
 //                .setGender() //TODO we dont have gender
-        .build();
+                .build();
     }
 
 }
