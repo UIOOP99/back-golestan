@@ -60,6 +60,13 @@ public class StudentController extends BaseController {
                 courseRepository.findAllBySemesterId(semesterId).stream()
                         .filter(c -> Arrays.stream(c.getStudentsIds()).anyMatch(id -> id == user.getUserId()))
                         .collect(Collectors.toList())) {
+            for (Score score:
+                 scoreRepository.findAllByCourseId(crs.getId())) {
+                if (score.getStudentId() == user.getUserId()) {
+                    sum += score.getScore();
+                    break;
+                }
+            }
             unit+=crs.getUnits();
         }
         map.put("status",status);
