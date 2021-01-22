@@ -23,7 +23,14 @@ public final class Course {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
+    private String name;
+
+    private int units;
+
     private int semesterId;
+
+    @OneToMany
+    private List<CourseDate> dates;
 
     private int professorId;
 
