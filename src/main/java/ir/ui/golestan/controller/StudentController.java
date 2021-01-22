@@ -24,10 +24,11 @@ public class StudentController extends BaseController {
     private final CourseRepository courseRepository;
     private final ScoreRepository scoreRepository;
 
-    public StudentController(GolestanConfiguration configuration, AuthorizationService authorizationService, CourseRepository courseRepository, ScoreRepository scoreRepository) {
+    public StudentController(GolestanConfiguration configuration, AuthorizationService authorizationService, CourseRepository courseRepository, ScoreRepository scoreRepository, DateRepository dateRepository) {
         super(configuration, authorizationService);
         this.courseRepository = courseRepository;
         this.scoreRepository = scoreRepository;
+        this.dateRepository = dateRepository;
     }
 
     @GetMapping("/student/get_scores")
@@ -50,6 +51,14 @@ public class StudentController extends BaseController {
         return courseRepository.findAllBySemesterId(semesterId).stream()
                 .filter(c -> Arrays.stream(c.getStudentsIds()).anyMatch(id -> id == user.getUserId()))
                 .collect(Collectors.toList());
+    }
+
+    @GetMapping("/student/get_schedule")
+    public List<CourseDate> getStudentCourseDates(RequestEntity<?> request) {
+        AuthenticatedUser user = getAuthenticatedUser(request, Role.STUDENT);
+        return dateRepository.findAll().stream()
+        .filter(c -> Arrays.stream(c.getAllStudentCourses()).anyMatch(id -> id == user.getUserId()))
+        .collect(Collectors.toList());
     }
 
 }
