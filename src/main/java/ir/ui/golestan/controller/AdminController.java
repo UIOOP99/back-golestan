@@ -1,9 +1,14 @@
 package ir.ui.golestan.controller;
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import ir.ui.golestan.data.entity.Course;
+import ir.ui.golestan.data.entity.CourseDate;
+import ir.ui.golestan.data.repository.CourseRepository;
+import ir.ui.golestan.data.repository.DateRepository;
 import lombok.Builder;
 import lombok.Value;
 import org.springframework.http.RequestEntity;
@@ -21,18 +26,38 @@ import ir.ui.golestan.data.repository.UserRoleRepository;
 public class AdminController extends BaseController {
 
     private final UserRoleRepository userRole;
+    private final CourseRepository courseRepository;
+    private final DateRepository dateRepository;
 
     public AdminController(GolestanConfiguration configuration, AuthorizationService authorizationService,
-                           UserRoleRepository userRole) {
+                           UserRoleRepository userRole, CourseRepository courseRepository, DateRepository dateRepository) {
         super(configuration, authorizationService);
         this.userRole = userRole;
+        this.courseRepository = courseRepository;
+        this.dateRepository = dateRepository;
     }
 
     @GetMapping("/admin/get_role")
     public UserRole getRole(int userId) {
-        return userRole.findByUserId(userId);
+
+        return userRole.getOne(userId);
     }
 
+    @GetMapping("/admin/get_allProfessors")
+    public List<Integer> findAllProfessorIdsList() {
+
+        return userRole.findAllByRole(Role.PROFESSOR).stream()
+                .map(UserRole::getUserId)
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/admin/get_allStudents")
+    public List<Integer> findAllStudentIdsList() {
+
+        return userRole.findAllByRole(Role.STUDENT).stream()
+                .map(UserRole::getUserId)
+                .collect(Collectors.toList());
+    }
 
     @PostMapping("/admin/add_user")
     public int createUser(RequestEntity<?> requestEntity, @RequestBody InputUser newUser) {
@@ -41,6 +66,25 @@ public class AdminController extends BaseController {
         int userId = 0; // TODO Send newUser to auth with grpc and get user
         userRole.save(UserRole.builder().userId(userId).role(Role.valueOf(newUser.role)).build());
         return userId;
+    }
+
+    @PostMapping("/course/add_date")
+    public CourseDate addDate(RequestEntity<?> requestEntity, int courseId, @RequestBody CourseDate date) {
+        AuthenticatedUser user = getAuthenticatedUser(requestEntity, Role.ADMIN);
+
+        CourseDate saved = dateRepository.save(date);
+        Course course = courseRepository.getOne(courseId);
+        List<CourseDate> dates = new ArrayList<>(course.getDates());
+        dates.add(saved);
+        course.setDates(dates);
+        courseRepository.save(course);
+        return saved;
+    }
+
+    @DeleteMapping("/course/delete_date")
+    public void deleteDate(RequestEntity<?> requestEntity, int dateId) {
+        AuthenticatedUser user = getAuthenticatedUser(requestEntity, Role.ADMIN);
+        dateRepository.deleteById(dateId);
     }
 
     @Value
