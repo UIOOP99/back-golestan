@@ -7,15 +7,14 @@ import ir.ui.golestan.authorization.BaseController;
 import ir.ui.golestan.authorization.Role;
 import ir.ui.golestan.data.entity.Course;
 import ir.ui.golestan.data.entity.Score;
+import ir.ui.golestan.data.entity.Semester;
 import ir.ui.golestan.data.repository.CourseRepository;
 import ir.ui.golestan.data.repository.ScoreRepository;
 import org.springframework.http.RequestEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -50,6 +49,24 @@ public class StudentController extends BaseController {
         return courseRepository.findAllBySemesterId(semesterId).stream()
                 .filter(c -> Arrays.stream(c.getStudentsIds()).anyMatch(id -> id == user.getUserId()))
                 .collect(Collectors.toList());
+    }
+
+    @GetMapping("/student/get_semester_info")
+    public Map<String,Object> getStudentSemesterInfo(RequestEntity<?> request, int semesterId) {
+        AuthenticatedUser user = getAuthenticatedUser(request, Role.STUDENT);
+        Map<String,Object> map = new HashMap<>();
+        String status = "PLACEHOOLDER"; int unit=0, sum=0, average;
+        for (Course crs:
+                courseRepository.findAllBySemesterId(semesterId).stream()
+                        .filter(c -> Arrays.stream(c.getStudentsIds()).anyMatch(id -> id == user.getUserId()))
+                        .collect(Collectors.toList())) {
+            unit+=crs.getUnits();
+        }
+        map.put("status",status);
+        map.put("unit",unit);
+        average=sum/unit;
+        map.put("average",average);
+        return map;
     }
 
 }
