@@ -63,8 +63,16 @@ public class AdminController extends BaseController {
     }
 
     @PostMapping("/admin/add_user")
-    public int createUser(RequestEntity<?> requestEntity, @RequestBody InputUser newUser) {
+    public int createUser(RequestEntity<?> requestEntity, String firstname, String lastname, String username, String email, String password, String role) {
         AuthenticatedUser user = getAuthenticatedUser(requestEntity, Role.ADMIN);
+        InputUser newUser = InputUser.builder()
+                .firstname(firstname)
+                .lastname(lastname)
+                .username(username)
+                .email(email)
+                .password(password)
+                .role(role)
+                .build();
 
         int userId = authGrpcClientService.signup(newUser);
         userRole.save(UserRole.builder().userId(userId).role(Role.valueOf(newUser.role)).build());
