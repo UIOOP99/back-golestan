@@ -6,9 +6,11 @@ import ir.ui.golestan.authorization.AuthorizationService;
 import ir.ui.golestan.authorization.BaseController;
 import ir.ui.golestan.authorization.Role;
 import ir.ui.golestan.data.entity.Course;
+import ir.ui.golestan.data.entity.CourseDate;
 import ir.ui.golestan.data.entity.Score;
 import ir.ui.golestan.data.entity.Semester;
 import ir.ui.golestan.data.repository.CourseRepository;
+import ir.ui.golestan.data.repository.DateRepository;
 import ir.ui.golestan.data.repository.ScoreRepository;
 import ir.ui.golestan.data.repository.SemesterRepository;
 import org.springframework.http.RequestEntity;
@@ -23,12 +25,14 @@ public class StudentController extends BaseController {
 
     private final CourseRepository courseRepository;
     private final ScoreRepository scoreRepository;
+    private final DateRepository dateRepository;
     private final SemesterRepository semesterRepository;
 
-    public StudentController(GolestanConfiguration configuration, AuthorizationService authorizationService, CourseRepository courseRepository, ScoreRepository scoreRepository, SemesterRepository semesterRepository) {
+    public StudentController(GolestanConfiguration configuration, AuthorizationService authorizationService, CourseRepository courseRepository, ScoreRepository scoreRepository, DateRepository dateRepository, SemesterRepository semesterRepository) {
         super(configuration, authorizationService);
         this.courseRepository = courseRepository;
         this.scoreRepository = scoreRepository;
+        this.dateRepository = dateRepository;
         this.semesterRepository = semesterRepository;
     }
 
@@ -51,6 +55,14 @@ public class StudentController extends BaseController {
         AuthenticatedUser user = getAuthenticatedUser(request, Role.STUDENT);
         return courseRepository.findAllBySemesterId(semesterId).stream()
                 .filter(c -> Arrays.stream(c.getStudentsIds()).anyMatch(id -> id == user.getUserId()))
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/student/get_schedule")
+    public List<CourseDate> getStudentCourseDates(RequestEntity<?> request) {
+        AuthenticatedUser user = getAuthenticatedUser(request, Role.STUDENT);
+        return getAllStudentCourses(request).stream()
+                .flatMap(c -> c.getDates().stream())
                 .collect(Collectors.toList());
     }
 

@@ -14,5 +14,7 @@ public interface CourseRepository extends JpaRepository<Course, Integer> {
 
     List<Course> findAllByProfessorIdAndSemesterId(int professorId, int semesterId);
 
-    List<Course> findAllBySemesterId( int semesterId);
+    List<Course> findAllBySemesterId(int semesterId);
+
 }
+
