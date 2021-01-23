@@ -10,6 +10,7 @@ import ir.ui.golestan.data.entity.Score;
 import ir.ui.golestan.data.entity.Semester;
 import ir.ui.golestan.data.repository.CourseRepository;
 import ir.ui.golestan.data.repository.ScoreRepository;
+import ir.ui.golestan.data.repository.SemesterRepository;
 import org.springframework.http.RequestEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,11 +23,13 @@ public class StudentController extends BaseController {
 
     private final CourseRepository courseRepository;
     private final ScoreRepository scoreRepository;
+    private final SemesterRepository semesterRepository;
 
-    public StudentController(GolestanConfiguration configuration, AuthorizationService authorizationService, CourseRepository courseRepository, ScoreRepository scoreRepository) {
+    public StudentController(GolestanConfiguration configuration, AuthorizationService authorizationService, CourseRepository courseRepository, ScoreRepository scoreRepository, SemesterRepository semesterRepository) {
         super(configuration, authorizationService);
         this.courseRepository = courseRepository;
         this.scoreRepository = scoreRepository;
+        this.semesterRepository = semesterRepository;
     }
 
     @GetMapping("/student/get_scores")
@@ -52,28 +55,32 @@ public class StudentController extends BaseController {
     }
 
     @GetMapping("/student/get_semester_info")
-    public Map<String,Object> getStudentSemesterInfo(RequestEntity<?> request, int semesterId) {
+    public List<Map<String, Object>> getStudentSemesterInfo(RequestEntity<?> request) {
         AuthenticatedUser user = getAuthenticatedUser(request, Role.STUDENT);
-        Map<String,Object> map = new HashMap<>();
-        String status = "PLACEHOOLDER"; int unit=0, sum=0, average;
-        for (Course crs:
-                courseRepository.findAllBySemesterId(semesterId).stream()
-                        .filter(c -> Arrays.stream(c.getStudentsIds()).anyMatch(id -> id == user.getUserId()))
-                        .collect(Collectors.toList())) {
-            for (Score score:
-                 scoreRepository.findAllByCourseId(crs.getId())) {
-                if (score.getStudentId() == user.getUserId()) {
-                    sum += score.getScore();
-                    break;
-                }
-            }
-            unit+=crs.getUnits();
-        }
-        map.put("status",status);
-        map.put("unit",unit);
-        average=sum/unit;
-        map.put("average",average);
-        return map;
+        List<Map<String, Object>> list = new ArrayList<>();
+        semesterRepository.findAll().stream()
+                .map(Semester::getId)
+                .filter(id -> getAllStudentCourses(request).stream().anyMatch(c -> c.getSemesterId() == id))
+                .forEach(semesterId -> {
+                    Map<String, Object> map = new HashMap<>();
+                    String status = "PLACEHOOLDER";
+                    int unit = 0;
+                    int sum = 0;
+                    List<Course> courses = courseRepository.findAllBySemesterId(semesterId).stream()
+                            .filter(c -> Arrays.stream(c.getStudentsIds()).anyMatch(id -> id == user.getUserId()))
+                            .collect(Collectors.toList());
+                    for (Course crs : courses) {
+                        Score score = scoreRepository.getOne(Score.ScoreId.of(user.getUserId(), crs.getId()));
+                        sum += score.getScore();
+                        unit += crs.getUnits();
+                    }
+                    map.put("status", status);
+                    map.put("unit", unit);
+                    int average = sum / unit;
+                    map.put("average", average);
+                    list.add(map);
+                });
+        return list;
     }
 
 }

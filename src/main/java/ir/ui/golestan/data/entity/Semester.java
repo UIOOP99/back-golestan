@@ -21,16 +21,5 @@ public final class Semester {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Id
-    private int studentId;
-
-    private int term;
-
-    private String status;
-
-    private int units;
-
-    private int average;
-
     String name;
 }
