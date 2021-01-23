@@ -9,6 +9,7 @@ import ir.ui.golestan.data.entity.Course;
 import ir.ui.golestan.data.entity.CourseDate;
 import ir.ui.golestan.data.repository.CourseRepository;
 import ir.ui.golestan.data.repository.DateRepository;
+import ir.ui.golestan.grpc.AuthGrpcClientService;
 import lombok.Builder;
 import lombok.Value;
 import org.springframework.http.RequestEntity;
@@ -28,13 +29,15 @@ public class AdminController extends BaseController {
     private final UserRoleRepository userRole;
     private final CourseRepository courseRepository;
     private final DateRepository dateRepository;
+    private final AuthGrpcClientService authGrpcClientService;
 
     public AdminController(GolestanConfiguration configuration, AuthorizationService authorizationService,
-                           UserRoleRepository userRole, CourseRepository courseRepository, DateRepository dateRepository) {
+                           UserRoleRepository userRole, CourseRepository courseRepository, DateRepository dateRepository, AuthGrpcClientService authGrpcClientService) {
         super(configuration, authorizationService);
         this.userRole = userRole;
         this.courseRepository = courseRepository;
         this.dateRepository = dateRepository;
+        this.authGrpcClientService = authGrpcClientService;
     }
 
     @GetMapping("/admin/get_role")
@@ -63,7 +66,7 @@ public class AdminController extends BaseController {
     public int createUser(RequestEntity<?> requestEntity, @RequestBody InputUser newUser) {
         AuthenticatedUser user = getAuthenticatedUser(requestEntity, Role.ADMIN);
 
-        int userId = 0; // TODO Send newUser to auth with grpc and get user
+        int userId = authGrpcClientService.signup(newUser);
         userRole.save(UserRole.builder().userId(userId).role(Role.valueOf(newUser.role)).build());
         return userId;
     }
