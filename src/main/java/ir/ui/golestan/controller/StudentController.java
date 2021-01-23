@@ -6,15 +6,16 @@ import ir.ui.golestan.authorization.AuthorizationService;
 import ir.ui.golestan.authorization.BaseController;
 import ir.ui.golestan.authorization.Role;
 import ir.ui.golestan.data.entity.Course;
+import ir.ui.golestan.data.entity.CourseDate;
 import ir.ui.golestan.data.entity.Score;
 import ir.ui.golestan.data.repository.CourseRepository;
+import ir.ui.golestan.data.repository.DateRepository;
 import ir.ui.golestan.data.repository.ScoreRepository;
 import org.springframework.http.RequestEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,6 +24,7 @@ public class StudentController extends BaseController {
 
     private final CourseRepository courseRepository;
     private final ScoreRepository scoreRepository;
+    private final DateRepository dateRepository;
 
     public StudentController(GolestanConfiguration configuration, AuthorizationService authorizationService, CourseRepository courseRepository, ScoreRepository scoreRepository, DateRepository dateRepository) {
         super(configuration, authorizationService);
@@ -56,9 +58,9 @@ public class StudentController extends BaseController {
     @GetMapping("/student/get_schedule")
     public List<CourseDate> getStudentCourseDates(RequestEntity<?> request) {
         AuthenticatedUser user = getAuthenticatedUser(request, Role.STUDENT);
-        return dateRepository.findAll().stream()
-        .filter(c -> Arrays.stream(c.getAllStudentCourses()).anyMatch(id -> id == user.getUserId()))
-        .collect(Collectors.toList());
+        return getAllStudentCourses(request).stream()
+                .flatMap(c -> c.getDates().stream())
+                .collect(Collectors.toList());
     }
 
 }
