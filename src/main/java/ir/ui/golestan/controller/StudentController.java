@@ -76,24 +76,27 @@ public class StudentController extends BaseController {
         AuthenticatedUser user = getAuthenticatedUser(token, Role.STUDENT);
         List<Map<String, Object>> list = new ArrayList<>();
         semesterRepository.findAll().stream()
-                .map(Semester::getId)
-                .filter(id -> getAllStudentCourses(token).stream().anyMatch(c -> c.getSemesterId() == id))
-                .forEach(semesterId -> {
+                .filter(semester -> getAllStudentCourses(token).stream().anyMatch(c -> c.getSemesterId() == semester.getId()))
+                .forEach(semester -> {
                     Map<String, Object> map = new HashMap<>();
                     String status = "PLACEHOOLDER";
                     int unit = 0;
                     int sum = 0;
-                    List<Course> courses = courseRepository.findAllBySemesterId(semesterId).stream()
+                    List<Course> courses = courseRepository.findAllBySemesterId(semester.getId()).stream()
                             .filter(c -> Arrays.stream(c.getStudentsIds()).anyMatch(id -> id == user.getUserId()))
                             .collect(Collectors.toList());
                     for (Course crs : courses) {
-                        Score score = scoreRepository.getOne(Score.ScoreId.of(user.getUserId(), crs.getId()));
-                        sum += score.getScore();
+                        Optional<Score> score = scoreRepository.findById(Score.ScoreId.of(user.getUserId(), crs.getId()));
+                        if (score.isPresent()) {
+                            sum += score.get().getScore();
+                        }
                         unit += crs.getUnits();
                     }
+                    map.put("semester_id", semester.getId());
+                    map.put("semester_name", semester.getName());
                     map.put("status", status);
                     map.put("unit", unit);
-                    int average = sum / unit;
+                    int average = unit == 0 ? 0 : sum / unit;
                     map.put("average", average);
                     list.add(map);
                 });
