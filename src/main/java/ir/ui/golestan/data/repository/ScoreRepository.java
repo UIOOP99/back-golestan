@@ -10,6 +10,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ScoreRepository extends JpaRepository<Score, Score.ScoreId> {
 
-    List<Score> findAllByStudentId(int studentId);
+    List<Score> findAllByStudentId(long studentId);
 
 }

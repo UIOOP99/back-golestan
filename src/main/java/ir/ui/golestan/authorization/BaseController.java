@@ -3,26 +3,26 @@ package ir.ui.golestan.authorization;
 import ir.ui.golestan.GolestanConfiguration;
 import org.springframework.http.RequestEntity;
 import org.springframework.util.Assert;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class BaseController {
 
-    private final GolestanConfiguration configuration;
     private final AuthorizationService authorizationService;
 
-    public BaseController(GolestanConfiguration configuration, AuthorizationService authorizationService) {
-        this.configuration = configuration;
+    public BaseController(AuthorizationService authorizationService) {
         this.authorizationService = authorizationService;
     }
 
-    protected AuthenticatedUser getAuthenticatedUser(RequestEntity<?> requestEntity) {
-        String jwtToken = requestEntity.getHeaders().getFirst(configuration.getAuthHeader());
-        return authorizationService.getAuthenticatedUser(jwtToken);
-    }
-
-    protected AuthenticatedUser getAuthenticatedUser(RequestEntity<?> requestEntity, Role requiredRole) {
-        AuthenticatedUser user = getAuthenticatedUser(requestEntity);
+    protected AuthenticatedUser getAuthenticatedUser(String token, Role requiredRole) {
+        AuthenticatedUser user = authorizationService.getAuthenticatedUser(token);
         Assert.isTrue(user.getRole() == requiredRole, () -> "Unauthorized action, user=" + user + " , requiredRole=" + requiredRole);
 
         return user;
     }
+
 }

@@ -1,22 +1,21 @@
 package ir.ui.golestan.authorization;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTVerifier;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.interfaces.DecodedJWT;
-import com.auth0.jwt.interfaces.ECDSAKeyProvider;
-import com.google.gson.Gson;
 import ir.ui.golestan.GolestanConfiguration;
 import ir.ui.golestan.data.repository.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
+import org.jose4j.jwt.JwtClaims;
+import org.jose4j.jwt.consumer.JwtConsumer;
+import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.springframework.stereotype.Service;
-import sun.security.ec.ECPrivateKeyImpl;
-import sun.security.ec.ECPublicKeyImpl;
+import sun.misc.BASE64Decoder;
 
-import java.security.interfaces.ECPrivateKey;
-import java.security.interfaces.ECPublicKey;
+import java.nio.file.AccessDeniedException;
+import java.security.AccessControlException;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -25,38 +24,45 @@ public class AuthorizationService {
     private final UserRoleRepository repository;
     private final GolestanConfiguration configuration;
 
-    @SneakyThrows
     public AuthenticatedUser getAuthenticatedUser(String token) {
-        Algorithm algorithm = Algorithm.ECDSA512(new ECDSAKeyProvider() {
-            @Override
-            @SneakyThrows
-            public ECPublicKey getPublicKeyById(String keyId) {
-                return new ECPublicKeyImpl(Base64.getDecoder().decode(configuration.getPublicKey().getBytes()));
-            }
-
-            @Override
-            @SneakyThrows
-            public ECPrivateKey getPrivateKey() {
-                return new ECPrivateKeyImpl(Base64.getDecoder().decode(configuration.getPrivateKey().getBytes()));
-            }
-
-            @Override
-            public String getPrivateKeyId() {
-                return null;
-            }
-        });
-        JWTVerifier verifier = JWT.require(algorithm)
-                .withIssuer("auth0")
-                .build();
-        DecodedJWT jwt = verifier.verify(token);
-
-        AuthenticatedUser user = new Gson().fromJson(jwt.getPayload(), AuthenticatedUser.class);
+        AuthenticatedUser user;
+        try {
+            user = decodeJwt(token);
+        } catch (Exception e) {
+            throw new AccessControlException(e.getMessage());
+        }
 
         return user.toBuilder()
-                .role(user.getUserId() == 1 ? Role.ADMIN :
-                        repository.findById(user.getUserId())
-                                .orElseThrow(() -> new IllegalAccessException("Unauthorized user: " + user))
-                                .getRole())
+                .role(user.getUserId() == 1 ? Role.ADMIN : repository.getOne(user.getUserId()).getRole())
                 .build();
     }
+
+    public AuthenticatedUser decodeJwt(String jwt) throws Exception {
+        String publicKeyPEM = new String(Base64.getDecoder().decode(configuration.getPublicKey()));
+
+        publicKeyPEM = publicKeyPEM.replace("-----BEGIN PUBLIC KEY-----\n", "");
+        publicKeyPEM = publicKeyPEM.replace("-----END PUBLIC KEY-----", "");
+        BASE64Decoder base64Decoder = new BASE64Decoder();
+        byte[] publicKeyBytes = base64Decoder.decodeBuffer(publicKeyPEM);
+
+        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
+        KeyFactory keyFactory = KeyFactory.getInstance("EC");
+        PublicKey publicKey = keyFactory.generatePublic(keySpec);
+
+        JwtConsumer jwtConsumer = new JwtConsumerBuilder()
+                .setRequireExpirationTime()
+                .setVerificationKey(publicKey)
+                .build();
+
+        JwtClaims jwtDecoded = jwtConsumer.processToClaims(jwt);
+        Map<String, Object> map = jwtDecoded.getClaimsMap();
+        return AuthenticatedUser.builder()
+                .userId((Long) map.get("user_id"))
+                .username((String) map.get("username"))
+                .firstName((String) map.get("first_name"))
+                .lastName((String) map.get("last_name"))
+                .email((String) map.get("email"))
+                .build();
+    }
+
 }

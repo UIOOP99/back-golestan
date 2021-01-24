@@ -32,9 +32,9 @@ public final class Course {
     @OneToMany
     private List<CourseDate> dates;
 
-    private int professorId;
+    private long professorId;
 
     @OrderColumn
-    private int[] studentsIds;
+    private long[] studentsIds;
 
 }

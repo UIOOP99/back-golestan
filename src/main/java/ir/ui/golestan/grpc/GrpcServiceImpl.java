@@ -36,7 +36,7 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
 
     @Override
     public void getPersonCourses(UserIdRequest request, StreamObserver<CoursesResponse> responseObserver) {
-        Integer userId = request.getUserId();
+        long userId = request.getUserId();
 
         List<Course> courses = userRoleRepository.getOne(userId).getRole() == Role.PROFESSOR ?
                 courseRepository.findAllByProfessorId(userId) :
@@ -49,9 +49,9 @@ public class GrpcServiceImpl extends GrpcServiceGrpc.GrpcServiceImplBase {
     }
 
     @Override
-    public void getPersonCoursesByTerm(TermIdRequest request, StreamObserver<CoursesResponse> responseObserver) {
-        Integer userId = request.getCourseId();
-        Integer termId = request.getTermId();
+    public void getPersonCoursesByTerm(PersonTermRequest request, StreamObserver<CoursesResponse> responseObserver) {
+        long userId = request.getUserId();
+        int termId = request.getTermId();
 
         List<Course> courses = userRoleRepository.getOne(userId).getRole() == Role.PROFESSOR ?
                 courseRepository.findAllByProfessorIdAndSemesterId(userId, termId) :

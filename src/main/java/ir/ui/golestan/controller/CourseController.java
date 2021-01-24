@@ -5,10 +5,11 @@ import ir.ui.golestan.authorization.AuthenticatedUser;
 import ir.ui.golestan.authorization.AuthorizationService;
 import ir.ui.golestan.authorization.BaseController;
 import ir.ui.golestan.authorization.Role;
-import ir.ui.golestan.exception.CourseNotFoundException;
 import ir.ui.golestan.data.entity.Course;
+import ir.ui.golestan.data.entity.CourseDate;
 import ir.ui.golestan.data.repository.CourseRepository;
-import org.springframework.http.RequestEntity;
+import ir.ui.golestan.data.repository.DateRepository;
+import ir.ui.golestan.exception.CourseNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,55 +18,43 @@ import java.util.List;
 public class CourseController extends BaseController {
 
     private final CourseRepository repository;
+    private final DateRepository dateRepository;
 
-    public CourseController(GolestanConfiguration configuration, AuthorizationService authorizationService, CourseRepository repository) {
-        super(configuration, authorizationService);
+    public CourseController(GolestanConfiguration configuration, AuthorizationService authorizationService, CourseRepository repository, DateRepository dateRepository) {
+        super(authorizationService);
         this.repository = repository;
+        this.dateRepository = dateRepository;
     }
 
     //add new course
     @PostMapping("/courses")
-    public Course newCourse (RequestEntity<?> requestEntity, @RequestBody Course newCourse) {
-        AuthenticatedUser user = getAuthenticatedUser(requestEntity, Role.ADMIN);
+    public Course newCourse(@RequestHeader("authorization") String token, @RequestBody Course newCourse) {
+        AuthenticatedUser user = getAuthenticatedUser(token, Role.ADMIN);
+
+        List<CourseDate> dates = dateRepository.saveAll(newCourse.getDates());
+        newCourse.setDates(dates);
+
         return repository.save(newCourse);
     }
 
-    //edit a course specifications
-    @PutMapping("/courses/{id}")
-    public Course replaceCourse (RequestEntity<?> requestEntity, @RequestBody Course newCourse, @PathVariable int id) {
-        AuthenticatedUser user = getAuthenticatedUser(requestEntity, Role.ADMIN);
-
-        return repository.findById(id)
-                .map(course -> {
-                    course.setId(newCourse.getId());
-                    course.setProfessorId(newCourse.getProfessorId());
-                    course.setStudentsIds(newCourse.getStudentsIds());
-                    return repository.save(course);
-                })
-                .orElseGet(() -> {
-                    newCourse.setId(id);
-                    return repository.save(newCourse);
-                });
-    }
-
     //get a course by id
-    @GetMapping("/courses/{id}")
-    public Course one(@PathVariable int id) {
+    @GetMapping("/courses")
+    public Course one(@RequestParam int id) {
         return repository.findById(id)
                 .orElseThrow(() -> new CourseNotFoundException(id));
     }
 
     //get a list of all courses
-    @GetMapping("/courses")
+    @GetMapping("/courses_all")
     public List<Course> all() {
         return repository.findAll();
     }
 
     //delete a course by id
-    @DeleteMapping("/courses/{id}")
-    public void deleteCourse (RequestEntity<?> requestEntity, @RequestBody Course delCourse) {
-        AuthenticatedUser user = getAuthenticatedUser(requestEntity, Role.ADMIN);
-        repository.delete(delCourse);
+    @DeleteMapping("/courses")
+    public void deleteCourse(@RequestHeader("authorization") String token, @RequestParam int id) {
+        AuthenticatedUser user = getAuthenticatedUser(token, Role.ADMIN);
+        repository.deleteById(id);
     }
 
 }

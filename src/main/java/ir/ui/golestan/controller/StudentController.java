@@ -13,8 +13,8 @@ import ir.ui.golestan.data.repository.CourseRepository;
 import ir.ui.golestan.data.repository.DateRepository;
 import ir.ui.golestan.data.repository.ScoreRepository;
 import ir.ui.golestan.data.repository.SemesterRepository;
-import org.springframework.http.RequestEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.*;
@@ -29,50 +29,55 @@ public class StudentController extends BaseController {
     private final SemesterRepository semesterRepository;
 
     public StudentController(GolestanConfiguration configuration, AuthorizationService authorizationService, CourseRepository courseRepository, ScoreRepository scoreRepository, DateRepository dateRepository, SemesterRepository semesterRepository) {
-        super(configuration, authorizationService);
+        super(authorizationService);
         this.courseRepository = courseRepository;
         this.scoreRepository = scoreRepository;
         this.dateRepository = dateRepository;
         this.semesterRepository = semesterRepository;
     }
 
+    @GetMapping("/student/profile")
+    public AuthenticatedUser profile(@RequestHeader("authorization") String token) {
+        return getAuthenticatedUser(token, Role.PROFESSOR);
+    }
+
     @GetMapping("/student/get_scores")
-    public List<Score> getStudentScores(RequestEntity<?> request) {
-        AuthenticatedUser user = getAuthenticatedUser(request, Role.STUDENT);
+    public List<Score> getStudentScores(@RequestHeader("authorization") String token) {
+        AuthenticatedUser user = getAuthenticatedUser(token, Role.STUDENT);
         return scoreRepository.findAllByStudentId(user.getUserId());
     }
 
     @GetMapping("/student/get_courses")
-    public List<Course> getAllStudentCourses(RequestEntity<?> request) {
-        AuthenticatedUser user = getAuthenticatedUser(request, Role.STUDENT);
+    public List<Course> getAllStudentCourses(@RequestHeader("authorization") String token) {
+        AuthenticatedUser user = getAuthenticatedUser(token, Role.STUDENT);
         return courseRepository.findAll().stream()
                 .filter(c -> Arrays.stream(c.getStudentsIds()).anyMatch(id -> id == user.getUserId()))
                 .collect(Collectors.toList());
     }
 
     @GetMapping("/student/get_semester_courses")
-    public List<Course> getAllSemesterStudentCourses(RequestEntity<?> request, int semesterId) {
-        AuthenticatedUser user = getAuthenticatedUser(request, Role.STUDENT);
+    public List<Course> getAllSemesterStudentCourses(@RequestHeader("authorization") String token, int semesterId) {
+        AuthenticatedUser user = getAuthenticatedUser(token, Role.STUDENT);
         return courseRepository.findAllBySemesterId(semesterId).stream()
                 .filter(c -> Arrays.stream(c.getStudentsIds()).anyMatch(id -> id == user.getUserId()))
                 .collect(Collectors.toList());
     }
 
     @GetMapping("/student/get_schedule")
-    public List<CourseDate> getStudentCourseDates(RequestEntity<?> request) {
-        AuthenticatedUser user = getAuthenticatedUser(request, Role.STUDENT);
-        return getAllStudentCourses(request).stream()
+    public List<CourseDate> getStudentCourseDates(@RequestHeader("authorization") String token) {
+        AuthenticatedUser user = getAuthenticatedUser(token, Role.STUDENT);
+        return getAllStudentCourses(token).stream()
                 .flatMap(c -> c.getDates().stream())
                 .collect(Collectors.toList());
     }
 
     @GetMapping("/student/get_semester_info")
-    public List<Map<String, Object>> getStudentSemesterInfo(RequestEntity<?> request) {
-        AuthenticatedUser user = getAuthenticatedUser(request, Role.STUDENT);
+    public List<Map<String, Object>> getStudentSemesterInfo(@RequestHeader("authorization") String token) {
+        AuthenticatedUser user = getAuthenticatedUser(token, Role.STUDENT);
         List<Map<String, Object>> list = new ArrayList<>();
         semesterRepository.findAll().stream()
                 .map(Semester::getId)
-                .filter(id -> getAllStudentCourses(request).stream().anyMatch(c -> c.getSemesterId() == id))
+                .filter(id -> getAllStudentCourses(token).stream().anyMatch(c -> c.getSemesterId() == id))
                 .forEach(semesterId -> {
                     Map<String, Object> map = new HashMap<>();
                     String status = "PLACEHOOLDER";

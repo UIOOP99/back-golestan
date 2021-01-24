@@ -1,9 +1,12 @@
 package ir.ui.golestan.grpc;
 
+import auth.AuthGrpc;
+import auth.AuthOuterClass;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Metadata;
+import io.grpc.stub.MetadataUtils;
 import ir.ui.golestan.GolestanConfiguration;
-import ir.ui.golestan.authorization.AuthenticatedUser;
 import ir.ui.golestan.controller.AdminController;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,13 +17,18 @@ public class AuthGrpcClientService {
 
     private final GolestanConfiguration configuration;
 
-    public int signup(AdminController.InputUser user) {
+    public int signup(String adminToken, AdminController.InputUser user) {
         ManagedChannel channel = ManagedChannelBuilder.forAddress(configuration.getAuthServerName(), configuration.getAuthServerPort())
                 .usePlaintext()
                 .build();
 
-        AuthGoGrpcServiceGrpc.AuthGoGrpcServiceBlockingStub stub = AuthGoGrpcServiceGrpc.newBlockingStub(channel);
-        ir.ui.golestan.grpc.User signedUpUser = stub.signup(inputUserToUser(user));
+        Metadata metadata = new Metadata();
+        Metadata.Key<String> key = Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER);
+        metadata.put(key, "Bearer " + adminToken);
+
+        AuthGrpc.AuthBlockingStub stub = AuthGrpc.newBlockingStub(channel);
+        stub = MetadataUtils.attachHeaders(stub, metadata);
+        AuthOuterClass.User signedUpUser = stub.signup(inputUserToUser(user));
         channel.shutdown();
 
         return (int) signedUpUser.getID();
@@ -31,8 +39,8 @@ public class AuthGrpcClientService {
                 .usePlaintext()
                 .build();
 
-        AuthGoGrpcServiceGrpc.AuthGoGrpcServiceBlockingStub stub = AuthGoGrpcServiceGrpc.newBlockingStub(channel);
-        PairToken pairToken = stub.login(Credentials.newBuilder().setUsername(username).setPassword(password).build());
+        AuthGrpc.AuthBlockingStub stub = AuthGrpc.newBlockingStub(channel);
+        AuthOuterClass.PairToken pairToken = stub.login(AuthOuterClass.Credentials.newBuilder().setUsername(username).setPassword(password).build());
         channel.shutdown();
 
         AuthPairToken authPairToken = new AuthPairToken();
@@ -47,16 +55,16 @@ public class AuthGrpcClientService {
                 .usePlaintext()
                 .build();
 
-        AuthGoGrpcServiceGrpc.AuthGoGrpcServiceBlockingStub stub = AuthGoGrpcServiceGrpc.newBlockingStub(channel);
-        JWTToken jwtToken = stub.refreshAccessToken(JWTToken.newBuilder().setToken(token).build());
+        AuthGrpc.AuthBlockingStub stub = AuthGrpc.newBlockingStub(channel);
+        AuthOuterClass.JWTToken jwtToken = stub.refreshAccessToken(AuthOuterClass.JWTToken.newBuilder().setToken(token).build());
         channel.shutdown();
 
         return jwtToken.getToken();
     }
 
 
-    private ir.ui.golestan.grpc.User inputUserToUser(AdminController.InputUser inputUser) {
-        return ir.ui.golestan.grpc.User.newBuilder()
+    private AuthOuterClass.User inputUserToUser(AdminController.InputUser inputUser) {
+        return AuthOuterClass.User.newBuilder()
                 .setEmail(inputUser.getEmail())
                 .setFirstName(inputUser.getFirstname())
                 .setLastName(inputUser.getLastname())

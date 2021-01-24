@@ -17,7 +17,7 @@ public final class Score {
 
 
 	@Id
-    int studentId;
+    long studentId;
 
     @Id
     int courseId;
@@ -29,7 +29,7 @@ public final class Score {
     @AllArgsConstructor(staticName = "of")
     public static class ScoreId implements Serializable {
 
-        int studentId;
+        long studentId;
 
         int courseId;
     }

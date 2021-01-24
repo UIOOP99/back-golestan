@@ -10,9 +10,7 @@ import ir.ui.golestan.data.entity.Score;
 import ir.ui.golestan.data.repository.CourseRepository;
 import ir.ui.golestan.data.repository.ScoreRepository;
 import ir.ui.golestan.grpc.AuthGrpcClientService;
-import org.springframework.http.RequestEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -29,27 +27,32 @@ public class ProfessorController extends BaseController {
 
     public ProfessorController(GolestanConfiguration configuration, AuthorizationService authorizationService,
                                ScoreRepository scoreRepository, CourseRepository courseRepository, AuthGrpcClientService authGrpcClientService) {
-        super(configuration, authorizationService);
+        super(authorizationService);
         this.scoreRepository = scoreRepository;
         this.courseRepository = courseRepository;
         this.authGrpcClientService = authGrpcClientService;
     }
 
-    @GetMapping("/professor/set_score")
-    public void setStudentScore(RequestEntity<?> request, int studentId, int courseId, double score) {
-        AuthenticatedUser user = getAuthenticatedUser(request, Role.PROFESSOR);
+    @GetMapping("/professor/profile")
+    public AuthenticatedUser profile(@RequestHeader("authorization") String token) {
+        return getAuthenticatedUser(token, Role.PROFESSOR);
+    }
+
+    @PostMapping("/professor/set_score")
+    public void setStudentScore(@RequestHeader("authorization") String token, @RequestPart int studentId, @RequestPart int courseId, @RequestPart double score) {
+        AuthenticatedUser user = getAuthenticatedUser(token, Role.PROFESSOR);
         scoreRepository.save(Score.builder().studentId(studentId).courseId(courseId).score(score).build());
     }
 
     @GetMapping("/professor/get_courses")
-    public List<Course> getAllCourses(RequestEntity<?> request) {
-        AuthenticatedUser user = getAuthenticatedUser(request, Role.PROFESSOR);
+    public List<Course> getAllCourses(@RequestHeader("authorization") String token) {
+        AuthenticatedUser user = getAuthenticatedUser(token, Role.PROFESSOR);
         return courseRepository.findAllByProfessorId(user.getUserId());
-   }
+    }
 
     @GetMapping("/professor/get_semester_courses")
-    public List<Course> getAllSemesterCourses(RequestEntity<?> request, int semesterId) {
-        AuthenticatedUser user = getAuthenticatedUser(request, Role.PROFESSOR);
+    public List<Course> getAllSemesterCourses(@RequestHeader("authorization") String token, int semesterId) {
+        AuthenticatedUser user = getAuthenticatedUser(token, Role.PROFESSOR);
         return courseRepository.findAllByProfessorIdAndSemesterId(user.getUserId(), semesterId);
     }
 
