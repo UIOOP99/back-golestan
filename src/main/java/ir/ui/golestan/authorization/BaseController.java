@@ -1,14 +1,9 @@
 package ir.ui.golestan.authorization;
 
-import ir.ui.golestan.GolestanConfiguration;
-import org.springframework.http.RequestEntity;
+import ir.ui.golestan.exception.AuthenticationException;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 
 public class BaseController {
 

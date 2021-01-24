@@ -2,6 +2,7 @@ package ir.ui.golestan.authorization;
 
 import ir.ui.golestan.GolestanConfiguration;
 import ir.ui.golestan.data.repository.UserRoleRepository;
+import ir.ui.golestan.exception.AuthenticationException;
 import lombok.RequiredArgsConstructor;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.consumer.JwtConsumer;
@@ -29,7 +30,7 @@ public class AuthorizationService {
         try {
             user = decodeJwt(token);
         } catch (Exception e) {
-            throw new AccessControlException(e.getMessage());
+            throw new AuthenticationException();
         }
 
         return user.toBuilder()

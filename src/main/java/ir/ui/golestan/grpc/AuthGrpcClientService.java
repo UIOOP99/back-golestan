@@ -7,6 +7,7 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
 import io.grpc.stub.MetadataUtils;
 import ir.ui.golestan.GolestanConfiguration;
+import ir.ui.golestan.authorization.AuthenticatedUser;
 import ir.ui.golestan.controller.AdminController;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,7 @@ public class AuthGrpcClientService {
 
     private final GolestanConfiguration configuration;
 
-    public int signup(String adminToken, AdminController.InputUser user) {
+    public AuthenticatedUser signup(String adminToken, AdminController.InputUser user) {
         ManagedChannel channel = ManagedChannelBuilder.forAddress(configuration.getAuthServerName(), configuration.getAuthServerPort())
                 .usePlaintext()
                 .build();
@@ -31,7 +32,13 @@ public class AuthGrpcClientService {
         AuthOuterClass.User signedUpUser = stub.signup(inputUserToUser(user));
         channel.shutdown();
 
-        return (int) signedUpUser.getID();
+        return AuthenticatedUser.builder()
+                .userId(signedUpUser.getID())
+                .email(signedUpUser.getEmail())
+                .lastName(signedUpUser.getLastName())
+                .firstName(signedUpUser.getFirstName())
+                .username(signedUpUser.getUsername())
+                .build();
     }
 
     public AuthPairToken login(String username, String password) {
@@ -69,7 +76,7 @@ public class AuthGrpcClientService {
                 .setFirstName(inputUser.getFirstname())
                 .setLastName(inputUser.getLastname())
                 .setUsername(inputUser.getUsername())
-//                .setRoleId() //TODO it needs roleId, idk what is roleId
+                .setRoleId(3)
                 .setPassword(inputUser.getPassword())
 //                .setGender() //TODO we dont have gender
                 .build();
