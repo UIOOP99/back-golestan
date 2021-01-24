@@ -53,17 +53,19 @@ public class AdminController extends BaseController {
     }
 
     @GetMapping("/get_allProfessors")
-    public List<AuthenticatedUser> findAllProfessorIdsList() {
+    public List<AuthenticatedUser> findAllProfessors() {
         return getUsersInfo(userRole.findAllByRole(Role.PROFESSOR).stream()
                 .map(UserRole::getUserId)
-                .collect(Collectors.toList()));
+                .collect(Collectors.toList()))
+                .stream().map(u -> u.toBuilder().role(Role.STUDENT).build()).collect(Collectors.toList());
     }
 
     @GetMapping("/get_allStudents")
-    public List<AuthenticatedUser> findAllStudentIdsList() {
+    public List<AuthenticatedUser> findAllStudents() {
         return getUsersInfo(userRole.findAllByRole(Role.STUDENT).stream()
                 .map(UserRole::getUserId)
-                .collect(Collectors.toList()));
+                .collect(Collectors.toList()))
+                .stream().map(u -> u.toBuilder().role(Role.STUDENT).build()).collect(Collectors.toList());
     }
 
     private List<AuthenticatedUser> getUsersInfo(List<Long> userIds) {

@@ -26,7 +26,12 @@ public class AuthGrpcClientService {
                 .usePlaintext()
                 .build();
 
+        Metadata metadata = new Metadata();
+        Metadata.Key<String> key = Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER);
+        metadata.put(key, "Bearer " + login("golestan", "1").getAccess());
+
         AuthGrpc.AuthBlockingStub stub = AuthGrpc.newBlockingStub(channel);
+        stub = MetadataUtils.attachHeaders(stub, metadata);
         AuthOuterClass.Users users = stub.getUserInfo(AuthOuterClass.UserID.newBuilder().addAllId(userIds).build());
 
         return users.getUsersList().stream().map(this::getAuthenticatedUser).collect(Collectors.toList());
