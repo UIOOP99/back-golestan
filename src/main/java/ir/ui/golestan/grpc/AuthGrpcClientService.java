@@ -12,11 +12,25 @@ import ir.ui.golestan.controller.AdminController;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class AuthGrpcClientService {
 
     private final GolestanConfiguration configuration;
+
+    public List<AuthenticatedUser> getUserInfo(List<Long> userIds) {
+        ManagedChannel channel = ManagedChannelBuilder.forAddress(configuration.getAuthServerName(), configuration.getAuthServerPort())
+                .usePlaintext()
+                .build();
+
+        AuthGrpc.AuthBlockingStub stub = AuthGrpc.newBlockingStub(channel);
+        AuthOuterClass.Users users = stub.getUserInfo(AuthOuterClass.UserID.newBuilder().addAllId(userIds).build());
+
+        return users.getUsersList().stream().map(this::getAuthenticatedUser).collect(Collectors.toList());
+    }
 
     public AuthenticatedUser signup(String adminToken, AdminController.InputUser user) {
         ManagedChannel channel = ManagedChannelBuilder.forAddress(configuration.getAuthServerName(), configuration.getAuthServerPort())
@@ -32,6 +46,10 @@ public class AuthGrpcClientService {
         AuthOuterClass.User signedUpUser = stub.signup(inputUserToUser(user));
         channel.shutdown();
 
+        return getAuthenticatedUser(signedUpUser);
+    }
+
+    private AuthenticatedUser getAuthenticatedUser(AuthOuterClass.User signedUpUser) {
         return AuthenticatedUser.builder()
                 .userId(signedUpUser.getID())
                 .email(signedUpUser.getEmail())

@@ -52,29 +52,22 @@ public class AdminController extends BaseController {
         return userRole.getOne(userId);
     }
 
-    @GetMapping("/admin/get_allProfessors")
-    public List<Map<String, Object>> findAllProfessorIdsList() {
+    @GetMapping("/get_allProfessors")
+    public List<AuthenticatedUser> findAllProfessorIdsList() {
         return getUsersInfo(userRole.findAllByRole(Role.PROFESSOR).stream()
                 .map(UserRole::getUserId)
                 .collect(Collectors.toList()));
     }
 
-    @GetMapping("/admin/get_allStudents")
-    public List<Map<String, Object>> findAllStudentIdsList() {
+    @GetMapping("/get_allStudents")
+    public List<AuthenticatedUser> findAllStudentIdsList() {
         return getUsersInfo(userRole.findAllByRole(Role.STUDENT).stream()
                 .map(UserRole::getUserId)
                 .collect(Collectors.toList()));
     }
 
-    private List<Map<String, Object>> getUsersInfo(List<Long> usersId) {
-        return usersId.stream()
-                .map(userId -> {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("user_id", userId);
-                    map.put("first_name", "fn:" + userId);
-                    map.put("last_name", "ln:" + userId);
-                    return map;
-                }).collect(Collectors.toList());
+    private List<AuthenticatedUser> getUsersInfo(List<Long> userIds) {
+        return authGrpcClientService.getUserInfo(userIds);
     }
 
     @PostMapping("/admin/add_user")
