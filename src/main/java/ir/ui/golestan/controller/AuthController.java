@@ -69,25 +69,26 @@ public class AuthController {
 
     private void generateFakeData(String token) {
         BiFunction<String, Integer, AdminController.InputUser.InputUserBuilder> userBuilderFunction = (role, num) -> AdminController.InputUser.builder()
-                .firstname("fn:" + role + num)
-                .lastname("ln:" + role + num)
+                .firstname("نام:" + role + num)
+                .lastname("ن خ:" + role + num)
                 .password(String.valueOf(num))
                 .email("abc@abc.com")
                 .username("u" + num);
 
         List<Long> professorIds = new ArrayList<>();
         List<Long> studentIds = new ArrayList<>();
+        List<Integer> semesterIds = new ArrayList<>();
 
         IntStream.range(0, 10).forEach(i -> {
-            professorIds.add(adminController.createUser(token, userBuilderFunction.apply("professor", i).role("PROFESSOR").build()).getUserId());
+            professorIds.add(adminController.createUser(token, userBuilderFunction.apply("استاد", i).role("PROFESSOR").build()).getUserId());
         });
 
         IntStream.range(10, 100).forEach(i -> {
-            studentIds.add(adminController.createUser(token, userBuilderFunction.apply("student", i).role("STUDENT").build()).getUserId());
+            studentIds.add(adminController.createUser(token, userBuilderFunction.apply("دانشجو", i).role("STUDENT").build()).getUserId());
         });
 
         IntStream.range(0, 10).forEach(i -> {
-            adminController.addSemester(token, "semester:" + i);
+            semesterIds.add(adminController.addSemester(token, "ترم:" + i));
         });
 
         Random random = new Random();
@@ -98,15 +99,15 @@ public class AuthController {
             }
 
             courseController.newCourse(token, Course.builder()
-                    .semesterId(random.nextInt(10))
-                    .dates(IntStream.range(0, 4)
+                    .semesterId(semesterIds.get(random.nextInt(10)))
+                    .dates(IntStream.range(0, 2)
                             .mapToObj(j -> CourseDate.builder()
-                                    .day("day:" + i + "" + j)
-                                    .start("start:" + j)
-                                    .end("end:" + j)
+                                    .day(new String[]{"شنبه", "یک شنبه", "دو شنبه", "سه شنبه", "چهار شنبه", "پنج شنبه"}[random.nextInt(6)])
+                                    .start(random.nextInt(24) + ":00")
+                                    .end(random.nextInt(24) + ":00")
                                     .build())
                             .collect(Collectors.toList()))
-                    .name("course:" + i)
+                    .name(new String[]{"ریاضی ", "فیزیک ", "پیشرفته ", "ساختمان داده ", "دیتابیس ", "شی گرا "}[random.nextInt(6)] + i)
                     .professorId(professorIds.get(random.nextInt(professorIds.size())))
                     .units(random.nextInt(3) + 1)
                     .studentsIds(sids)

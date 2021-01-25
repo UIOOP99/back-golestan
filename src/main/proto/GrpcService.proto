@@ -6,7 +6,7 @@ message CourseResponse {
   int32 id = 1;
   int32 semesterId = 2;
   int64 professorId = 3;
-
+  repeated int64 studentId = 4;
 }
 
 message CoursesResponse{
